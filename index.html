@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Manager Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>
+            Secure File Manager
+        </h1>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+            <button type="submit">Login</button>
+            <p id="error" class="error"></p>
+        </form>
+    </div>
+    <script>
+        if (!localStorage.getItem("auditLog")){
+            localStorage.setItem("auditLog", JSON.stringify([]));
+        }
+        if(!localStorage.getItem("storedFiles")){
+            localStorage.setItem("storedFiles", JSON.stringify({}));
+        }
+
+        function addLogEntry(event, user, status){
+            const logs = JSON.parse(localStorage.getItem("auditLog"));
+            const timestamp = new Date().toLocaleString();
+            logs.push({ event, user, status, timestamp });
+            localStorage.setItem("auditLog", JSON.stringify(logs));
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", function(event){
+            event.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const error = document.getElementById("error");
+
+            if(username === "abc" && password === "123"){
+                addLogEntry("Login Attempt", username, "Success");
+                localStorage.setItem("user", username);
+                window.location.href = "dashboard.html";
+            }else{
+                addLogEntry("Login Attempt", username, "Failed");
+                error.textContent = "Invalid username or password!";
+            }});
+    </script>
+</body>
+</html>
