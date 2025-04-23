@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome, <span id="username"></span>!</h1>
+
+        <h2>Upload a File</h2>
+        <form id="uploadForm">
+            <input type="file" id="fileInput" required>
+            <button type="submit">Upload</button>
+        </form>
+
+        <h2>Your Files</h2>
+        <ul id="fileList"></ul>
+
+        <h2>Audit Log</h2>
+        <table id="auditLog">
+            <thead>
+                <tr>
+                    <th>Event</th>
+                    <th>User</th>
+                    <th>Status</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="logBody"></tbody>
+        </table>
+
+        <button onclick="logout()" class="logout-btn">Logout</button>
+    </div>
+
+    <script>
+        const user = localStorage.getItem("user");
+        if (!user) {
+            window.location.href = "index.html";
+        } else {
+            document.getElementById("username").textContent = user;
+        }
+
+        let files = JSON.parse(localStorage.getItem("storedFiles")) || {};
+
+        function addLogEntry(event, user, status) {
+            const logs = JSON.parse(localStorage.getItem("auditLog")) || [];
+            const timestamp = new Date().toLocaleString();
+            logs.push({ event, user, status, timestamp });
+            localStorage.setItem("auditLog", JSON.stringify(logs));
+            updateAuditLog();
+        }
+
+        document.getElementById("uploadForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+            const fileInput = document.getElementById("fileInput");
+            const file = fileInput.files[0];
+            if (file) {
+                const fileId = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    files[fileId] = {
+                        name: fileId,
+                        data: e.target.result,
+                        type: file.type
+                    };
+                    localStorage.setItem("storedFiles", JSON.stringify(files));
+                    addLogEntry("File Upload", user, `Uploaded ${fileId}`);
+                    updateFileList();
+                };
+                reader.readAsDataURL(file);
+                fileInput.value = "";
+            }
+        });
+
+        function updateFileList() {
+            const fileList = document.getElementById("fileList");
+            fileList.innerHTML = "";
+            for (let fileId in files) {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    ${fileId} - 
+                    <a href="#" onclick="downloadFile('${fileId}')">Download</a> | 
+                    <a href="#" onclick="deleteFile('${fileId}')">Delete</a>
+                `;
+                fileList.appendChild(li);
+            }
+        }
+
+        function updateAuditLog() {
+            const logs = JSON.parse(localStorage.getItem("auditLog")) || [];
+            const logBody = document.getElementById("logBody");
+            logBody.innerHTML = "";
+            logs.forEach(log => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${log.event}</td>
+                    <td>${log.user}</td>
+                    <td>${log.status}</td>
+                    <td>${log.timestamp}</td>
+                `;
+                logBody.appendChild(tr);
+            });
+        }
+
+        function downloadFile(fileId) {
+            const file = files[fileId];
+            if (file) {
+                const a = document.createElement("a");
+                a.href = file.data;
+                a.download = file.name;
+                a.click();
+                addLogEntry("File Download", user, `Downloaded ${fileId}`);
+            }
+        }
+
+        function deleteFile(fileId) {
+            if (confirm(`Are you sure you want to delete "${fileId}"?`)) {
+                delete files[fileId];
+                localStorage.setItem("storedFiles", JSON.stringify(files));
+                addLogEntry("File Deletion", user, `Deleted ${fileId}`);
+                updateFileList();
+            }
+        }
+
+        function logout() {
+            addLogEntry("Logout", user, "Success");
+            localStorage.removeItem("user");
+            window.location.href = "index.html";
+        }
+
+        updateFileList();
+        updateAuditLog();
+    </script>
+</body>
+</html>

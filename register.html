@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Secure File Manager</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Create Account</h1>
+        <form id="registerForm">
+            <label for="username">Choose Username:</label>
+            <input type="text" id="username" required>
+            <label for="password">Create Password:</label>
+            <input type="password" id="password" required>
+            <p id="strengthMessage"></p>
+            <button type="submit">Register</button>
+            <p class="error" id="error"></p>
+            <p>Already have an account? <a href="index.html">Login</a></p>
+        </form>
+    </div>
+
+    <script>
+        function getStrength(pass) {
+            if (pass.length < 6) return "Too weak";
+            if (/[A-Z]/.test(pass) && /[0-9]/.test(pass) && /[\W]/.test(pass)) return "Strong";
+            return "Moderate";
+        }
+
+        const passwordInput = document.getElementById("password");
+        const strengthMsg = document.getElementById("strengthMessage");
+
+        passwordInput.addEventListener("input", () => {
+            const strength = getStrength(passwordInput.value);
+            strengthMsg.textContent = "Password strength: " + strength;
+            strengthMsg.style.color = strength === "Strong" ? "lightgreen" : (strength === "Moderate" ? "orange" : "red");
+        });
+
+        document.getElementById("registerForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const error = document.getElementById("error");
+            let users = JSON.parse(localStorage.getItem("users")) || {};
+
+            if (users[username]) {
+                error.textContent = "Username already exists.";
+                return;
+            }
+
+            users[username] = password;
+            localStorage.setItem("users", JSON.stringify(users));
+            window.location.href = "index.html";
+        });
+    </script>
+</body>
+</html>

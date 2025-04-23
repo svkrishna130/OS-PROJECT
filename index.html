@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure File Manager - Login</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Secure File Manager</h1>
+        <form id="loginForm">
+            <label for="username">Username:</label>
+            <input type="text" id="username" required>
+            <label for="password">Password:</label>
+            <input type="password" id="password" required>
+            <button type="submit">Login</button>
+            <p class="error" id="error"></p>
+            <p>Don't have an account? <a href="register.html">Register here</a></p>
+        </form>
+    </div>
+
+    <script>
+        if (!localStorage.getItem("users")) localStorage.setItem("users", JSON.stringify({}));
+        if (!localStorage.getItem("auditLog")) localStorage.setItem("auditLog", JSON.stringify([]));
+        if (!localStorage.getItem("storedFiles")) localStorage.setItem("storedFiles", JSON.stringify({}));
+
+        function addLog(event, user, status) {
+            const logs = JSON.parse(localStorage.getItem("auditLog"));
+            logs.push({ event, user, status, timestamp: new Date().toLocaleString() });
+            localStorage.setItem("auditLog", JSON.stringify(logs));
+        }
+
+        document.getElementById("loginForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const users = JSON.parse(localStorage.getItem("users"));
+            const error = document.getElementById("error");
+
+            if (users[username] && users[username] === password) {
+                localStorage.setItem("user", username);
+                addLog("Login", username, "Success");
+                window.location.href = "dashboard.html";
+            } else {
+                addLog("Login", username, "Failed");
+                error.textContent = "Invalid credentials!";
+            }
+        });
+    </script>
+</body>
+</html>
